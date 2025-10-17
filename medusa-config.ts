@@ -9,8 +9,8 @@ module.exports = defineConfig({
     workerMode: process.env.MEDUSA_WORKER_MODE as 'shared' | 'worker' | 'server',
     http: {
       storeCors: process.env.STORE_CORS || "https://dailybudgetmart-storefront.lovable.app",
-      adminCors: process.env.ADMIN_CORS || "https://backend-production-806b.up.railway.app",
-      authCors: process.env.AUTH_CORS || "https://dailybudgetmart-storefront.lovable.app,https://backend-production-806b.up.railway.app",
+      adminCors: process.env.ADMIN_CORS || "http://localhost:5173",
+      authCors: process.env.AUTH_CORS || "https://dailybudgetmart-storefront.lovable.app,http://localhost:5173",
       jwtSecret: process.env.JWT_SECRET,
       cookieSecret: process.env.COOKIE_SECRET,
     },
