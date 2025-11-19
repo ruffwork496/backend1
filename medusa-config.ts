@@ -6,29 +6,27 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     redisUrl: process.env.REDIS_URL,
-    workerMode: process.env.MEDUSA_WORKER_MODE as "shared" | "worker" | "server", // e.g. "server" or "worker" in production [[Worker mode](https://docs.medusajs.com/learn/configurations/medusa-config#workermode)]
+    workerMode: process.env.MEDUSA_WORKER_MODE as "shared" | "worker" | "server",
 
     http: {
-      // CORS should be fully controlled via env in production [[Medusa config](https://docs.medusajs.com/learn/configurations/medusa-config#configuration-file)]
       storeCors: process.env.STORE_CORS!,   // e.g. https://your-storefront.com
       adminCors: process.env.ADMIN_CORS!,   // e.g. https://your-medusa-backend.com
-      authCors: process.env.AUTH_CORS!,     // e.g. https://your-storefront.com,https://your-medusa-backend.com
+      authCors: process.env.AUTH_CORS!,     // comma-separated list of allowed origins
 
-      // Must be set in production; app crashes if missing [[http.jwtSecret](https://docs.medusajs.com/learn/configurations/medusa-config#http)]
       jwtSecret: process.env.JWT_SECRET,
       cookieSecret: process.env.COOKIE_SECRET,
     },
   },
 
   admin: {
-    // Disable admin on worker instance, keep enabled on server instance [[Admin config](https://docs.medusajs.com/learn/configurations/medusa-config#admin-configurations-admin); [General deploy](https://docs.medusajs.com/learn/deployment/general#1-configure-medusa-application)]
     disable: process.env.DISABLE_MEDUSA_ADMIN === "true",
-    // Backend URL for the Admin SPA when served from a different domain [[Admin backendUrl](https://docs.medusajs.com/learn/configurations/medusa-config#admin-configurations-admin)]
     backendUrl: process.env.MEDUSA_BACKEND_URL,
   },
 
   modules: [
-    // Recommended production modules [[Production modules](https://docs.medusajs.com/learn/deployment/general#3-install-production-modules-and-providers)]
+    //
+    // Production infra modules
+    //
     {
       resolve: "@medusajs/medusa/caching",
       options: {
@@ -73,5 +71,44 @@ module.exports = defineConfig({
         ],
       },
     },
+
+    //
+    // Stripe Payment Module Provider
+    //
+    {
+      resolve: "@medusajs/medusa/payment",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/payment-stripe",
+            id: "stripe",
+            options: {
+              apiKey: process.env.STRIPE_API_KEY,
+              // webhookSecret: process.env.STRIPE_WEBHOOK_SECRET, // optional for deployed apps
+            },
+          },
+        ],
+      },
+    }, // [[Stripe provider](https://docs.medusajs.com/resources/commerce-modules/payment/payment-provider/stripe)]
+
+    //
+    // Resend Notification Module Provider
+    //
+    {
+      resolve: "@medusajs/medusa/notification",
+      options: {
+        providers: [
+          {
+            resolve: "./src/modules/resend",
+            id: "resend",
+            options: {
+              channels: ["email"],
+              api_key: process.env.RESEND_API_KEY,
+              from: process.env.RESEND_FROM_EMAIL,
+            },
+          },
+        ],
+      },
+    }, // [[Resend config](https://docs.medusajs.com/resources/integrations/guides/resend#add-module-to-configurations)]
   ],
 })
